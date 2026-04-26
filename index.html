@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hukum Perbandingan Tetap - Proust</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', sans-serif; overflow: hidden; background: #ffffff; touch-action: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        #ui-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        #header { background: rgba(255,255,255,0.9); color: #333; padding: 15px; text-align: center; pointer-events: auto; border-bottom: 3px solid #e17055; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .toggle-btn { position: fixed; top: 90px; right: 15px; width: 50px; height: 50px; border-radius: 50%; background: #e17055; border: none; color: white; cursor: pointer; pointer-events: auto; font-size: 20px; box-shadow: 0 4px 10px rgba(225,112,85,0.3); }
+        #info-panel { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #ffffff; padding: 30px; overflow-y: auto; transform: translateX(-100%); transition: 0.4s cubic-bezier(0.4,0,0.2,1); pointer-events: auto; z-index: 1000; color: #333; }
+        #info-panel.show { transform: translateX(0); }
+        .calc-container { background: #fff5f3; padding: 20px; border-radius: 15px; border: 1px solid #ffd0c7; margin: 20px 0; }
+        .calc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .calc-row input { width: 90px; padding: 10px; border: 2px solid #ddd; border-radius: 8px; text-align: center; font-weight: bold; outline: none; }
+        .calc-row input:focus { border-color: #e17055; }
+        .result-box { background: #e17055; color: #fff; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px; }
+        .law-quote { background: #fff5f3; border-left: 5px solid #e17055; padding: 15px; margin-top: 20px; font-style: italic; line-height: 1.6; color: #444; }
+        #controls { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; pointer-events: auto; }
+        .control-btn { padding: 15px 30px; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #react-btn { background: #e17055; color: white; }
+        .reset-btn { background: #ffffff; color: #e17055; border: 1px solid #e17055; }
+        #loading { position: fixed; inset: 0; background: #fff; color: #e17055; display: flex; align-items: center; justify-content: center; z-index: 2000; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div id="loading">Memuat Laboratorium...</div>
+<div id="ui-container">
+    <div id="header">
+        <h1 style="color:#e17055;">Hukum Perbandingan Tetap</h1>
+        <p>
+            <span style="color:#0984e3;font-weight:bold;">2H<sub>2(g)</sub></span>
+            <span style="color:#555;"> + </span>
+            <span style="color:#e17055;font-weight:bold;">O<sub>2(g)</sub></span>
+            <span style="color:#555;"> → </span>
+            <span style="color:#6c5ce7;font-weight:bold;">2H<sub>2</sub>O<sub>(l)</sub></span>
+        </p>
+    </div>
+    <button class="toggle-btn" onclick="toggleInfo()">ℹ️</button>
+    <div id="info-panel">
+        <button style="float:right;background:#e17055;color:white;border:none;padding:8px 18px;border-radius:20px;cursor:pointer;" onclick="toggleInfo()">Tutup ×</button>
+        <h2 style="color:#e17055;margin-bottom:15px;">⚖️ Kalkulator Perbandingan Tetap</h2>
+        <div class="calc-container">
+            <div class="calc-row"><span>Massa H₂ (g)</span><input type="number" id="massH" value="2" oninput="calculateFixed()"></div>
+            <div class="result-box">
+                <div style="font-size:0.85em;opacity:0.9;margin-bottom:5px;">MASSA O₂ YANG DIBUTUHKAN</div>
+                <div id="massOResult" style="font-size:2.2em;font-weight:bold;">16.00</div>
+                <span>gram (Rasio H:O = 1:8)</span>
+            </div>
+            <div style="margin-top:15px;padding:12px;background:#fff;border-radius:8px;text-align:center;font-weight:bold;color:#e17055;">
+                Massa H₂O = <span id="massWater">18.00</span> gram
+            </div>
+        </div>
+        <h3 style="margin-top:25px;color:#e17055;">Persamaan Reaksi:</h3>
+        <div style="background:#f9f9f9;padding:15px;border-radius:8px;font-family:monospace;font-size:1.2em;text-align:center;margin:10px 0;border:1px solid #eee;">
+            2H<sub>2(g)</sub> + O<sub>2(g)</sub> → 2H<sub>2</sub>O<sub>(l)</sub>
+        </div>
+        <h3 style="margin-top:25px;color:#e17055;">Bunyi Hukum:</h3>
+        <div class="law-quote">
+            "Perbandingan massa unsur-unsur dalam suatu senyawa selalu tetap, tidak bergantung pada cara pembuatan senyawa tersebut."
+            <br><br><strong>— Joseph Louis Proust (1799)</strong>
+        </div>
+    </div>
+    <div id="controls">
+        <button class="control-btn" id="react-btn" onclick="triggerReaction()">💧 Mulai Reaksi</button>
+        <button class="control-btn reset-btn" onclick="location.reload()">↻ Reset</button>
+    </div>
+</div>
+<script>
+    let scene, camera, renderer, experimentGroup;
+    let hydrogens = [], oxygens = [], products = [];
+    let isBurned = false;
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 22);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const pt = new THREE.PointLight(0xffffff, 0.5);
+        pt.position.set(5, 10, 10); scene.add(pt);
+        experimentGroup = new THREE.Group();
+        experimentGroup.add(new THREE.Mesh(
+            new THREE.CylinderGeometry(4, 4, 10, 128),
+            new THREE.MeshPhongMaterial({ color: 0xdddddd, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+        ));
+        // H2 — biru kecil
+        for (let i = 0; i < 20; i++) {
+            const c = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshPhongMaterial({ color: 0x0984e3 }));
+            c.position.set((Math.random()-0.5)*5, (Math.random()-0.5)*7, (Math.random()-0.5)*5);
+            hydrogens.push(c); experimentGroup.add(c);
+        }
+        // O2 — oranye besar
+        for (let i = 0; i < 10; i++) {
+            const c = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshPhongMaterial({ color: 0xe17055 }));
+            c.position.set((Math.random()-0.5)*5, (Math.random()-0.5)*7, (Math.random()-0.5)*5);
+            oxygens.push(c); experimentGroup.add(c);
+        }
+        scene.add(experimentGroup);
+        document.getElementById('loading').style.display = 'none';
+        animate();
+    }
+
+    function calculateFixed() {
+        const h = parseFloat(document.getElementById('massH').value) || 0;
+        const o = (h * 8).toFixed(2);
+        const w = (h * 9).toFixed(2);
+        document.getElementById('massOResult').innerText = o;
+        document.getElementById('massWater').innerText = w;
+    }
+
+    function triggerReaction() {
+        if (isBurned) return;
+        isBurned = true;
+        document.getElementById('react-btn').style.display = 'none';
+        let progress = 0;
+        const center = new THREE.Vector3(0, 0, 0);
+        const interval = setInterval(() => {
+            progress += 0.03;
+            hydrogens.forEach(c => { c.position.lerp(center, 0.08); if (c.position.distanceTo(center) < 0.5) c.visible = false; });
+            oxygens.forEach(c => { c.position.lerp(center, 0.05); if (c.position.distanceTo(center) < 0.5) { c.visible = false; } });
+            if (progress >= 3 && products.length === 0) {
+                for (let i = 0; i < 8; i++) {
+                    const c = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), new THREE.MeshPhongMaterial({ color: 0x6c5ce7 }));
+                    const angle = (i / 8) * Math.PI * 2;
+                    c.position.set(Math.cos(angle)*2, Math.sin(angle)*2, 0);
+                    products.push(c); experimentGroup.add(c);
+                }
+            }
+            if (progress >= 5) {
+                clearInterval(interval);
+                alert("Reaksi Selesai!\n\n2H₂ + O₂ → 2H₂O\n\nPerbandingan H:O selalu 1:8 (massa)\nBerapapun jumlahnya, rasio SELALU TETAP!");
+            }
+        }, 50);
+    }
+
+    function animate() { requestAnimationFrame(animate); experimentGroup.rotation.y += 0.005; renderer.render(scene, camera); }
+    function toggleInfo() { document.getElementById('info-panel').classList.toggle('show'); }
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+    init();
+</script>
+</body>
+</html>
