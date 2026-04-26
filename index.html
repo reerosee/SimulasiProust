@@ -93,13 +93,13 @@
             new THREE.MeshPhongMaterial({ color: 0xdddddd, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
         ));
         // H2 — biru kecil
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 2; i++) {
             const c = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), new THREE.MeshPhongMaterial({ color: 0x0984e3 }));
             c.position.set((Math.random()-0.5)*5, (Math.random()-0.5)*7, (Math.random()-0.5)*5);
             hydrogens.push(c); experimentGroup.add(c);
         }
         // O2 — oranye besar
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 16; i++) {
             const c = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshPhongMaterial({ color: 0xe17055 }));
             c.position.set((Math.random()-0.5)*5, (Math.random()-0.5)*7, (Math.random()-0.5)*5);
             oxygens.push(c); experimentGroup.add(c);
